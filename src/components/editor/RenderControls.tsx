@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import type { RenderSettings } from '../../types';
 
 interface RenderControlsProps {
@@ -9,6 +10,11 @@ interface RenderControlsProps {
 }
 
 const DPMM_OPTIONS = [6, 8, 12, 24];
+const ROTATION_OPTIONS = [0, 90, 180, 270] as const;
+
+// Conversion helpers
+const mmToInches = (mm: number) => Number((mm / 25.4).toFixed(3));
+const inchesToMm = (inches: number) => Number((inches * 25.4).toFixed(1));
 
 export function RenderControls({
     settings,
@@ -17,10 +23,33 @@ export function RenderControls({
     isRendering,
     disabled
 }: RenderControlsProps) {
+    // Display values based on current unit
+    const displayWidth = useMemo(() => {
+        return settings.unit === 'inches' ? mmToInches(settings.widthMm) : settings.widthMm;
+    }, [settings.widthMm, settings.unit]);
+
+    const displayHeight = useMemo(() => {
+        return settings.unit === 'inches' ? mmToInches(settings.heightMm) : settings.heightMm;
+    }, [settings.heightMm, settings.unit]);
+
+    const handleWidthChange = (value: number) => {
+        const widthMm = settings.unit === 'inches' ? inchesToMm(value) : value;
+        onSettingsChange({ ...settings, widthMm });
+    };
+
+    const handleHeightChange = (value: number) => {
+        const heightMm = settings.unit === 'inches' ? inchesToMm(value) : value;
+        onSettingsChange({ ...settings, heightMm });
+    };
+
+    const handleUnitChange = (unit: 'mm' | 'inches') => {
+        onSettingsChange({ ...settings, unit });
+    };
+
     return (
         <div className="flex flex-wrap items-end gap-4 p-4 bg-white/40 rounded-xl border border-[var(--glass-border)]">
             {/* DPMM Select */}
-            <div className="flex-1 min-w-[120px]">
+            <div className="flex-1 min-w-[130px]">
                 <label className="label">Resolution (dpmm)</label>
                 <select
                     className="select-field w-full"
@@ -36,34 +65,65 @@ export function RenderControls({
                 </select>
             </div>
 
+            {/* Unit Select */}
+            <div className="min-w-[90px]">
+                <label className="label">Unit</label>
+                <select
+                    className="select-field w-full"
+                    value={settings.unit}
+                    onChange={(e) => handleUnitChange(e.target.value as 'mm' | 'inches')}
+                    disabled={disabled}
+                >
+                    <option value="mm">mm</option>
+                    <option value="inches">inches</option>
+                </select>
+            </div>
+
             {/* Width Input */}
             <div className="flex-1 min-w-[100px]">
-                <label className="label">Width (mm)</label>
+                <label className="label">Width ({settings.unit})</label>
                 <input
                     type="number"
                     className="input-field"
-                    value={settings.widthMm}
-                    onChange={(e) => onSettingsChange({ ...settings, widthMm: Number(e.target.value) })}
-                    min={10}
-                    max={500}
-                    step={0.1}
+                    value={displayWidth}
+                    onChange={(e) => handleWidthChange(Number(e.target.value))}
+                    min={settings.unit === 'inches' ? 0.5 : 10}
+                    max={settings.unit === 'inches' ? 20 : 500}
+                    step={settings.unit === 'inches' ? 0.01 : 0.1}
                     disabled={disabled}
                 />
             </div>
 
             {/* Height Input */}
             <div className="flex-1 min-w-[100px]">
-                <label className="label">Height (mm)</label>
+                <label className="label">Height ({settings.unit})</label>
                 <input
                     type="number"
                     className="input-field"
-                    value={settings.heightMm}
-                    onChange={(e) => onSettingsChange({ ...settings, heightMm: Number(e.target.value) })}
-                    min={10}
-                    max={500}
-                    step={0.1}
+                    value={displayHeight}
+                    onChange={(e) => handleHeightChange(Number(e.target.value))}
+                    min={settings.unit === 'inches' ? 0.5 : 10}
+                    max={settings.unit === 'inches' ? 20 : 500}
+                    step={settings.unit === 'inches' ? 0.01 : 0.1}
                     disabled={disabled}
                 />
+            </div>
+
+            {/* Rotation Select */}
+            <div className="min-w-[90px]">
+                <label className="label">Rotate</label>
+                <select
+                    className="select-field w-full"
+                    value={settings.rotation}
+                    onChange={(e) => onSettingsChange({ ...settings, rotation: Number(e.target.value) as 0 | 90 | 180 | 270 })}
+                    disabled={disabled}
+                >
+                    {ROTATION_OPTIONS.map(deg => (
+                        <option key={deg} value={deg}>
+                            {deg}°
+                        </option>
+                    ))}
+                </select>
             </div>
 
             {/* Render Button */}

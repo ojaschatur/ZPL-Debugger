@@ -1,4 +1,5 @@
-import Editor from '@monaco-editor/react';
+import Editor, { OnMount } from '@monaco-editor/react';
+import { useCallback } from 'react';
 
 interface ZplEditorProps {
     value: string;
@@ -7,14 +8,79 @@ interface ZplEditorProps {
 }
 
 export function ZplEditor({ value, onChange, disabled = false }: ZplEditorProps) {
+    const handleEditorMount: OnMount = useCallback((_editor, monaco) => {
+        // Register ZPL language
+        monaco.languages.register({ id: 'zpl' });
+
+        // Define ZPL syntax highlighting
+        monaco.languages.setMonarchTokensProvider('zpl', {
+            tokenizer: {
+                root: [
+                    // Comments (^FX)
+                    [/\^FX.*$/, 'comment'],
+
+                    // Format commands (^XA, ^XZ)
+                    [/\^(XA|XZ)/, 'keyword'],
+
+                    // Field commands
+                    [/\^(FO|FD|FS|FT|FB|FH|FN|FR|FW|FP|FV)/, 'type'],
+
+                    // Barcode commands
+                    [/\^(B[A-Z0-9])/, 'function'],
+
+                    // Graphics commands
+                    [/\^(GB|GC|GD|GE|GF|GS)/, 'number'],
+
+                    // Font commands
+                    [/\^(A[A-Z0-9]|CF)/, 'variable'],
+
+                    // Change commands
+                    [/\^(BY|CI|MM|PO|PW|LH|LL|LT|LS)/, 'string'],
+
+                    // All other ^ commands
+                    [/\^[A-Z]{1,2}/, 'support'],
+
+                    // Numbers
+                    [/\d+/, 'constant.numeric'],
+
+                    // Commas (parameters)
+                    [/,/, 'delimiter']
+                ]
+            }
+        });
+
+        // Define ZPL theme colors
+        monaco.editor.defineTheme('zpl-theme', {
+            base: 'vs',
+            inherit: true,
+            rules: [
+                { token: 'comment', foreground: '6b7280', fontStyle: 'italic' },
+                { token: 'keyword', foreground: 'dc2626', fontStyle: 'bold' },
+                { token: 'type', foreground: '2563eb' },
+                { token: 'function', foreground: '7c3aed' },
+                { token: 'number', foreground: 'd97706' },
+                { token: 'variable', foreground: '059669' },
+                { token: 'string', foreground: 'db2777' },
+                { token: 'support', foreground: '64748b' },
+                { token: 'constant.numeric', foreground: '0891b2' },
+                { token: 'delimiter', foreground: '9ca3af' }
+            ],
+            colors: {}
+        });
+
+        // Apply the theme
+        monaco.editor.setTheme('zpl-theme');
+    }, []);
+
     return (
         <div className="h-full min-h-[400px] rounded-xl overflow-hidden border border-[var(--glass-border)] bg-white/50">
             <Editor
                 height="100%"
-                defaultLanguage="plaintext"
-                theme="vs"
+                defaultLanguage="zpl"
+                theme="zpl-theme"
                 value={value}
                 onChange={(val) => onChange(val || '')}
+                onMount={handleEditorMount}
                 options={{
                     readOnly: disabled,
                     minimap: { enabled: false },

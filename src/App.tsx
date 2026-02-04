@@ -6,6 +6,7 @@ import { PreviewPage } from './components/pages/PreviewPage';
 import { ToastContainer } from './components/feedback/Toast';
 import { useZplRenderer } from './hooks/useZplRenderer';
 import { extractZplFromXml } from './parsers/parseXmlResponse';
+import { validateZpl } from './utils/zplValidator';
 import type { InputMode, RenderSettings, ToastMessage, ZplError } from './types';
 
 function App() {
@@ -21,7 +22,9 @@ function App() {
     const [renderSettings, setRenderSettings] = useState<RenderSettings>({
         dpmm: 8,
         widthMm: 101.6,
-        heightMm: 152.4
+        heightMm: 152.4,
+        unit: 'mm',
+        rotation: 0
     });
 
     // Preview state
@@ -88,6 +91,24 @@ function App() {
 
         setPreviewError(null);
         clearErrors();
+
+        // Validate ZPL before rendering
+        const validationResult = validateZpl(zplCode);
+        if (!validationResult.valid || validationResult.errors.length > 0) {
+            // Add validation errors to error panel
+            validationResult.errors.forEach(err => {
+                addError('syntax', err.message, err.line);
+            });
+
+            // If there are critical errors, don't attempt to render
+            if (!validationResult.valid) {
+                addToast('error', 'ZPL validation failed - fix errors before rendering');
+                return;
+            }
+
+            // If only warnings, show toast but continue rendering
+            addToast('warning', 'ZPL has warnings - rendering anyway');
+        }
 
         try {
             const image = await renderZpl(

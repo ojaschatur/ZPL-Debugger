@@ -6,6 +6,8 @@ export interface RenderSettings {
     dpmm: number;
     widthMm: number;
     heightMm: number;
+    unit: 'mm' | 'inches';
+    rotation: 0 | 90 | 180 | 270;
 }
 
 export interface ParseResult {

@@ -97,6 +97,7 @@ export function PreviewPage({
                         image={previewImage}
                         isLoading={isRendering}
                         error={previewError}
+                        rotation={renderSettings.rotation}
                     />
                 </GlassCard>
 

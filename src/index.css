@@ -11,28 +11,28 @@
   --text-secondary: #64748b;
   --text-muted: #94a3b8;
   --border-color: rgba(148, 163, 184, 0.3);
-  
+
   /* Accent Colors */
   --accent-primary: #6366f1;
   --accent-secondary: #8b5cf6;
   --accent-glow: rgba(99, 102, 241, 0.4);
-  
+
   /* Glass Effect */
   --glass-bg: rgba(255, 255, 255, 0.7);
   --glass-border: rgba(255, 255, 255, 0.5);
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
   --glass-shadow-hover: 0 20px 48px rgba(0, 0, 0, 0.12);
-  
+
   /* Error Colors */
   --error-bg: rgba(239, 68, 68, 0.1);
   --error-border: rgba(239, 68, 68, 0.3);
   --error-text: #dc2626;
-  
+
   /* Success Colors */
   --success-bg: rgba(34, 197, 94, 0.1);
   --success-border: rgba(34, 197, 94, 0.3);
   --success-text: #16a34a;
-  
+
   /* Warning Colors */
   --warning-bg: rgba(245, 158, 11, 0.1);
   --warning-border: rgba(245, 158, 11, 0.3);
@@ -282,25 +282,33 @@ body {
   }
 
   .toast-success {
-    background: var(--success-bg);
+    background: #f0fdf4;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--success-border);
     color: var(--success-text);
   }
 
   .toast-error {
-    background: var(--error-bg);
+    background: #fef2f2;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--error-border);
     color: var(--error-text);
   }
 
   .toast-warning {
-    background: var(--warning-bg);
+    background: #fefce8;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--warning-border);
     color: var(--warning-text);
   }
 
   .toast-info {
-    background: rgba(99, 102, 241, 0.1);
+    background: #eef2ff;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(99, 102, 241, 0.3);
     color: var(--accent-primary);
   }
@@ -357,6 +365,7 @@ body {
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -368,6 +377,7 @@ body {
     transform: translateX(0);
     opacity: 1;
   }
+
   to {
     transform: translateX(100%);
     opacity: 0;
@@ -375,8 +385,13 @@ body {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
@@ -384,6 +399,7 @@ body {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -391,8 +407,15 @@ body {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .animate-fade-in {
