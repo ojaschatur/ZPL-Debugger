@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Header } from './components/layout/Header';
 import { PageTabs, type PageType } from './components/navigation/PageTabs';
 import { RequestPage } from './components/pages/RequestPage';
@@ -30,6 +30,7 @@ function App() {
     // Preview state
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [previewError, setPreviewError] = useState<string | null>(null);
+    const [autoRender, setAutoRender] = useState(true);
 
     // Error handling
     const [errors, setErrors] = useState<ZplError[]>([]);
@@ -57,6 +58,17 @@ function App() {
     const clearErrors = useCallback(() => {
         setErrors([]);
     }, []);
+
+    // Auto-render effect with debounce
+    useEffect(() => {
+        if (!autoRender || !zplCode.trim() || !isReady) return;
+
+        const timer = setTimeout(() => {
+            handleRender();
+        }, 1500); // Wait 1.5 seconds after user stops typing
+
+        return () => clearTimeout(timer);
+    }, [zplCode, autoRender, isReady]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Handle response received from API
     const handleResponseReceived = useCallback((response: string) => {
@@ -165,6 +177,8 @@ function App() {
                         previewError={previewError}
                         errors={errors}
                         onClearErrors={clearErrors}
+                        autoRender={autoRender}
+                        onAutoRenderChange={setAutoRender}
                     />
                 )}
             </main>

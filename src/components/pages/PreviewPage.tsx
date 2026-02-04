@@ -17,6 +17,8 @@ interface PreviewPageProps {
     previewError: string | null;
     errors: ZplError[];
     onClearErrors: () => void;
+    autoRender: boolean;
+    onAutoRenderChange: (enabled: boolean) => void;
 }
 
 export function PreviewPage({
@@ -30,7 +32,9 @@ export function PreviewPage({
     previewImage,
     previewError,
     errors,
-    onClearErrors
+    onClearErrors,
+    autoRender,
+    onAutoRenderChange
 }: PreviewPageProps) {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
@@ -50,6 +54,15 @@ export function PreviewPage({
                                 Initializing renderer...
                             </span>
                         )}
+                        <label className="flex items-center gap-2 text-xs text-[var(--text-secondary)] cursor-pointer select-none">
+                            <input
+                                type="checkbox"
+                                checked={autoRender}
+                                onChange={(e) => onAutoRenderChange(e.target.checked)}
+                                className="w-4 h-4 rounded border-gray-300 text-[var(--accent-primary)] focus:ring-[var(--accent-primary)]"
+                            />
+                            Auto-render
+                        </label>
                     </div>
 
                     <RenderControls
