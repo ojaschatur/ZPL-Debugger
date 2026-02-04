@@ -1,0 +1,96 @@
+import type { RenderSettings } from '../../types';
+
+interface RenderControlsProps {
+    settings: RenderSettings;
+    onSettingsChange: (settings: RenderSettings) => void;
+    onRender: () => void;
+    isRendering: boolean;
+    disabled: boolean;
+}
+
+const DPMM_OPTIONS = [6, 8, 12, 24];
+
+export function RenderControls({
+    settings,
+    onSettingsChange,
+    onRender,
+    isRendering,
+    disabled
+}: RenderControlsProps) {
+    return (
+        <div className="flex flex-wrap items-end gap-4 p-4 bg-white/40 rounded-xl border border-[var(--glass-border)]">
+            {/* DPMM Select */}
+            <div className="flex-1 min-w-[120px]">
+                <label className="label">Resolution (dpmm)</label>
+                <select
+                    className="select-field w-full"
+                    value={settings.dpmm}
+                    onChange={(e) => onSettingsChange({ ...settings, dpmm: Number(e.target.value) })}
+                    disabled={disabled}
+                >
+                    {DPMM_OPTIONS.map(dpmm => (
+                        <option key={dpmm} value={dpmm}>
+                            {dpmm} dpmm ({dpmm * 25.4} DPI)
+                        </option>
+                    ))}
+                </select>
+            </div>
+
+            {/* Width Input */}
+            <div className="flex-1 min-w-[100px]">
+                <label className="label">Width (mm)</label>
+                <input
+                    type="number"
+                    className="input-field"
+                    value={settings.widthMm}
+                    onChange={(e) => onSettingsChange({ ...settings, widthMm: Number(e.target.value) })}
+                    min={10}
+                    max={500}
+                    step={0.1}
+                    disabled={disabled}
+                />
+            </div>
+
+            {/* Height Input */}
+            <div className="flex-1 min-w-[100px]">
+                <label className="label">Height (mm)</label>
+                <input
+                    type="number"
+                    className="input-field"
+                    value={settings.heightMm}
+                    onChange={(e) => onSettingsChange({ ...settings, heightMm: Number(e.target.value) })}
+                    min={10}
+                    max={500}
+                    step={0.1}
+                    disabled={disabled}
+                />
+            </div>
+
+            {/* Render Button */}
+            <div className="flex-shrink-0">
+                <button
+                    className="btn-primary flex items-center gap-2 h-[42px]"
+                    onClick={onRender}
+                    disabled={disabled || isRendering}
+                >
+                    {isRendering ? (
+                        <>
+                            <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                            </svg>
+                            Rendering...
+                        </>
+                    ) : (
+                        <>
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            Render Preview
+                        </>
+                    )}
+                </button>
+            </div>
+        </div>
+    );
+}
