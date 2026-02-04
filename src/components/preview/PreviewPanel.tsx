@@ -9,7 +9,7 @@ interface PreviewPanelProps {
 
 export function PreviewPanel({ image, isLoading, error, rotation = 0 }: PreviewPanelProps) {
     const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
-    const [zoom, setZoom] = useState(100);
+    const [zoom, setZoom] = useState(125);
     const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {

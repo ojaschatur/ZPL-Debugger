@@ -62,10 +62,21 @@ function Toast({ toast, onDismiss }: SingleToastProps) {
         ),
     };
 
+    // Define background colors for each type as fallback
+    const backgroundColors = {
+        success: '#f0fdf4',
+        error: '#fef2f2',
+        warning: '#fefce8',
+        info: '#eef2ff'
+    };
+
     return (
         <div
             className={`toast toast-${toast.type} ${isExiting ? 'animate-[slideOutRight_0.3s_ease-out_forwards]' : ''}`}
-            style={isExiting ? { animation: 'slideOutRight 0.3s ease-out forwards' } : undefined}
+            style={{
+                backgroundColor: backgroundColors[toast.type],
+                ...(isExiting ? { animation: 'slideOutRight 0.3s ease-out forwards' } : {})
+            }}
         >
             {icons[toast.type]}
             <span className="flex-1">{toast.message}</span>
