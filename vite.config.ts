@@ -20,5 +20,5 @@ export default defineConfig(({ command }) => ({
     exclude: ['zpl-renderer-js']
   },
   // Ensure local dev runs at root, but production build uses the repo subpath
-  base: command === 'serve' ? '/' : '/zpl-debugger/',
+  base: command === 'serve' ? '/' : '/ZPL-Debugger/',
 }))
