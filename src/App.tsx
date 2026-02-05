@@ -7,6 +7,7 @@ import { ToastContainer } from './components/feedback/Toast';
 import { useZplRenderer } from './hooks/useZplRenderer';
 import { extractZplFromXml } from './parsers/parseXmlResponse';
 import { validateZpl } from './utils/zplValidator';
+import { extractVariables, removeScriptBlocks, replaceVariables } from './utils/templateParser';
 import type { InputMode, RenderSettings, ToastMessage, ZplError } from './types';
 
 function App() {
@@ -31,6 +32,11 @@ function App() {
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [previewError, setPreviewError] = useState<string | null>(null);
     const [autoRender, setAutoRender] = useState(true);
+
+    // Template variable state
+    const [templateVariables, setTemplateVariables] = useState<string[]>([]);
+    const [variableValues, setVariableValues] = useState<Record<string, string>>({});
+    const [scriptBlockCount, setScriptBlockCount] = useState(0);
 
     // Error handling
     const [errors, setErrors] = useState<ZplError[]>([]);
@@ -68,7 +74,16 @@ function App() {
         }, 1500); // Wait 1.5 seconds after user stops typing
 
         return () => clearTimeout(timer);
-    }, [zplCode, autoRender, isReady]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [zplCode, variableValues, autoRender, isReady]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Template variable detection effect
+    useEffect(() => {
+        const detected = extractVariables(zplCode);
+        const { scriptCount } = removeScriptBlocks(zplCode);
+
+        setTemplateVariables(detected);
+        setScriptBlockCount(scriptCount);
+    }, [zplCode]);
 
     // Handle response received from API
     const handleResponseReceived = useCallback((response: string) => {
@@ -104,8 +119,24 @@ function App() {
         setPreviewError(null);
         clearErrors();
 
-        // Validate ZPL before rendering
-        const validationResult = validateZpl(zplCode);
+        // Step 1: Process template (remove scripts and replace variables)
+        let processedZpl = zplCode;
+
+        // Remove script blocks
+        const { cleanedTemplate, scriptCount, warnings } = removeScriptBlocks(zplCode);
+        if (scriptCount > 0) {
+            addToast('warning', `Removed ${scriptCount} script block(s) - fill variables manually`);
+            warnings.forEach((warning, idx) => {
+                addError('template', `Script ${idx + 1}: ${warning}`);
+            });
+        }
+        processedZpl = cleanedTemplate;
+
+        // Replace variables with values
+        processedZpl = replaceVariables(processedZpl, variableValues);
+
+        // Step 2: Validate processed ZPL
+        const validationResult = validateZpl(processedZpl);
         if (!validationResult.valid || validationResult.errors.length > 0) {
             // Add validation errors to error panel
             validationResult.errors.forEach(err => {
@@ -122,9 +153,10 @@ function App() {
             addToast('warning', 'ZPL has warnings - rendering anyway');
         }
 
+        // Step 3: Render
         try {
             const image = await renderZpl(
-                zplCode,
+                processedZpl,
                 renderSettings.widthMm,
                 renderSettings.heightMm,
                 renderSettings.dpmm
@@ -137,7 +169,7 @@ function App() {
             addError('rendering', message);
             addToast('error', 'Failed to render label');
         }
-    }, [zplCode, renderSettings, renderZpl, addToast, addError, clearErrors]);
+    }, [zplCode, renderSettings, renderZpl, addToast, addError, clearErrors, variableValues]);
 
     // Handle error from child components
     const handleError = useCallback((error: string) => {
@@ -179,6 +211,10 @@ function App() {
                         onClearErrors={clearErrors}
                         autoRender={autoRender}
                         onAutoRenderChange={setAutoRender}
+                        templateVariables={templateVariables}
+                        variableValues={variableValues}
+                        onVariableValuesChange={setVariableValues}
+                        scriptBlockCount={scriptBlockCount}
                     />
                 )}
             </main>

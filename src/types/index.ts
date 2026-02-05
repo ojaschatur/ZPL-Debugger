@@ -1,7 +1,7 @@
 // ===== Application Types =====
 
-export type InputMode = 'api' | 'paste';
-
+export type InputMode = 'paste' | 'upload' | 'api';
+export type ErrorType = 'syntax' | 'rendering' | 'template';
 export interface RenderSettings {
     dpmm: number;
     widthMm: number;
@@ -18,7 +18,7 @@ export interface ParseResult {
 
 export interface ZplError {
     id: string;
-    type: 'syntax' | 'rendering';
+    type: ErrorType;
     message: string;
     line?: number;
     timestamp: Date;
@@ -42,6 +42,19 @@ export interface ApiResponse {
     data?: string;
     status?: number;
     error?: string;
+}
+
+// Template support types
+export interface VariablePreset {
+    name: string;
+    values: Record<string, string>;
+}
+
+export interface TemplateInfo {
+    variables: string[];
+    scriptBlocks: number;
+    hasVariables: boolean;
+    hasScripts: boolean;
 }
 
 // ===== Worker Message Types =====

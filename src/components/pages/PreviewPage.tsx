@@ -3,6 +3,7 @@ import { ZplEditor } from '../editor/ZplEditor';
 import { RenderControls } from '../editor/RenderControls';
 import { PreviewPanel } from '../preview/PreviewPanel';
 import { ErrorPanel } from '../feedback/ErrorPanel';
+import { VariablePanel } from '../template/VariablePanel';
 import type { RenderSettings, ZplError } from '../../types';
 
 interface PreviewPageProps {
@@ -19,6 +20,10 @@ interface PreviewPageProps {
     onClearErrors: () => void;
     autoRender: boolean;
     onAutoRenderChange: (enabled: boolean) => void;
+    templateVariables: string[];
+    variableValues: Record<string, string>;
+    onVariableValuesChange: (values: Record<string, string>) => void;
+    scriptBlockCount: number;
 }
 
 export function PreviewPage({
@@ -34,7 +39,11 @@ export function PreviewPage({
     errors,
     onClearErrors,
     autoRender,
-    onAutoRenderChange
+    onAutoRenderChange,
+    templateVariables,
+    variableValues,
+    onVariableValuesChange,
+    scriptBlockCount
 }: PreviewPageProps) {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
@@ -77,8 +86,21 @@ export function PreviewPage({
                         <ZplEditor
                             value={zplCode}
                             onChange={onZplChange}
+                            disabled={!isReady || isRendering}
                         />
                     </div>
+
+                    {/* Variable Panel */}
+                    {(templateVariables.length > 0 || scriptBlockCount > 0) && (
+                        <div className="mt-4">
+                            <VariablePanel
+                                variables={templateVariables}
+                                values={variableValues}
+                                onValuesChange={onVariableValuesChange}
+                                scriptCount={scriptBlockCount}
+                            />
+                        </div>
+                    )}
                 </GlassCard>
 
                 {/* Quick Paste Helper */}
