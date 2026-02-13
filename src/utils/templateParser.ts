@@ -122,3 +122,87 @@ export function analyzeTemplate(template: string): {
         hasScripts: scriptCount > 0
     };
 }
+
+/**
+ * Execute script blocks and replace with their output
+ */
+export async function executeScripts(
+    template: string,
+    mockData: any
+): Promise<{
+    processedTemplate: string;
+    errors: string[];
+}> {
+    const errors: string[] = [];
+    let processedTemplate = template;
+
+    // Import interpreter dynamically
+    try {
+        const { executeVBScript } = await import('./vbscript/interpreter');
+
+        // Find all script blocks
+        const scriptRegex = /<script[\s\S]*?<\/script>/gi;
+        const matches = template.match(scriptRegex);
+
+        if (matches) {
+            for (const scriptBlock of matches) {
+                // Extract script content
+                const scriptContent = scriptBlock
+                    .replace(/<script[\s\S]*?>/i, '')
+                    .replace(/<\/script>/i, '')
+                    .trim();
+
+                // Execute script
+                const result = executeVBScript(scriptContent, mockData);
+
+                if (result.success) {
+                    // Replace script block with output
+                    processedTemplate = processedTemplate.replace(scriptBlock, result.output);
+                } else {
+                    errors.push(result.error || 'Script execution failed');
+                    // Remove failed script block
+                    processedTemplate = processedTemplate.replace(scriptBlock, '');
+                }
+            }
+        }
+    } catch (error) {
+        errors.push(`Script execution failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+
+    return {
+        processedTemplate,
+        errors
+    };
+}
+
+
+/**
+ * Extract variable references from script blocks
+ * Finds patterns like Shipment.OrderNo, Parcel.Weight, etc.
+ */
+export function extractScriptVariables(template: string): string[] {
+    const variables = new Set<string>();
+    
+    // Find all script blocks
+    const scriptRegex = /<script[\s\S]*?<\/script>/gi;
+    const matches = template.match(scriptRegex);
+    
+    if (matches) {
+        matches.forEach(scriptBlock => {
+            // Match object.property patterns
+            // Matches: Shipment.Status, Parcel.Weight, Shipment.Sender.Name, etc.
+            const varRegex = /\b(Shipment|Parcel|shipment|parcel)\.[\w.()]+/g;
+            const vars = scriptBlock.match(varRegex);
+            
+            if (vars) {
+                vars.forEach(v => {
+                    // Clean up: remove function calls like .ToString()
+                    const cleaned = v.replace(/\.[a-z]+\([^)]*\)$/i, '');
+                    variables.add(cleaned);
+                });
+            }
+        });
+    }
+    
+    return Array.from(variables).sort();
+}

@@ -21,9 +21,12 @@ interface PreviewPageProps {
     autoRender: boolean;
     onAutoRenderChange: (enabled: boolean) => void;
     templateVariables: string[];
+    scriptVariables: string[];
     variableValues: Record<string, string>;
     onVariableValuesChange: (values: Record<string, string>) => void;
     scriptBlockCount: number;
+    scriptMode: 'auto' | 'manual';
+    onScriptModeChange: (mode: 'auto' | 'manual') => void;
 }
 
 export function PreviewPage({
@@ -41,9 +44,12 @@ export function PreviewPage({
     autoRender,
     onAutoRenderChange,
     templateVariables,
+    scriptVariables,
     variableValues,
     onVariableValuesChange,
-    scriptBlockCount
+    scriptBlockCount,
+    scriptMode,
+    onScriptModeChange
 }: PreviewPageProps) {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
@@ -91,12 +97,15 @@ export function PreviewPage({
                     </div>
 
                     {/* Variable Panel */}
-                    {(templateVariables.length > 0 || scriptBlockCount > 0) && (
+                    {(templateVariables.length > 0 || scriptVariables.length > 0 || scriptBlockCount > 0) && (
                         <div className="mt-4">
                             <VariablePanel
-                                variables={templateVariables}
+                                templateVariables={templateVariables}
+                                scriptVariables={scriptVariables}
                                 values={variableValues}
                                 onValuesChange={onVariableValuesChange}
+                                scriptMode={scriptMode}
+                                onScriptModeChange={onScriptModeChange}
                                 scriptCount={scriptBlockCount}
                             />
                         </div>
