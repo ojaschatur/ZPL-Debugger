@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { HoppAuth } from '../../types/restTypes';
+import { getOAuth2Token } from '../../utils/httpClient';
 
 interface AuthEditorProps {
     auth: HoppAuth;
@@ -10,6 +11,34 @@ type AuthType = 'none' | 'bearer' | 'basic' | 'oauth-2';
 
 export function AuthEditor({ auth, onChange }: AuthEditorProps) {
     const [showSecret, setShowSecret] = useState(false);
+    const [isFetchingToken, setIsFetchingToken] = useState(false);
+    const [tokenStatus, setTokenStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+    const handleGetToken = async () => {
+        if (auth.authType !== 'oauth-2') return;
+        const { tokenEndpoint, authEndpoint, clientID, clientSecret, scopes } = auth.grantTypeInfo;
+        const endpoint = tokenEndpoint || authEndpoint;
+
+        if (!endpoint) { setTokenStatus({ type: 'error', message: 'Token Endpoint is required' }); return; }
+        if (!clientID) { setTokenStatus({ type: 'error', message: 'Client ID is required' }); return; }
+        if (!clientSecret) { setTokenStatus({ type: 'error', message: 'Client Secret is required' }); return; }
+
+        setIsFetchingToken(true);
+        setTokenStatus(null);
+
+        const result = await getOAuth2Token(endpoint, clientID, clientSecret, scopes);
+
+        if (result.token) {
+            onChange({
+                ...auth,
+                grantTypeInfo: { ...auth.grantTypeInfo, token: result.token },
+            });
+            setTokenStatus({ type: 'success', message: 'Token acquired successfully!' });
+        } else {
+            setTokenStatus({ type: 'error', message: result.error || 'Failed to get token' });
+        }
+        setIsFetchingToken(false);
+    };
 
     const handleTypeChange = (authType: AuthType) => {
         switch (authType) {
@@ -60,8 +89,8 @@ export function AuthEditor({ auth, onChange }: AuthEditorProps) {
                             key={type}
                             onClick={() => handleTypeChange(type)}
                             className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${auth.authType === type
-                                    ? 'bg-[var(--accent-primary)] text-white shadow-sm'
-                                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/50'
+                                ? 'bg-[var(--accent-primary)] text-white shadow-sm'
+                                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/50'
                                 }`}
                         >
                             {type === 'oauth-2' ? 'OAuth 2.0' : type.charAt(0).toUpperCase() + type.slice(1)}
@@ -224,19 +253,51 @@ export function AuthEditor({ auth, onChange }: AuthEditorProps) {
                         />
                     </label>
 
-                    {/* Current Token */}
-                    <label className="block">
-                        <span className="text-xs font-medium text-[var(--text-secondary)]">Access Token</span>
+                    {/* Current Token + Get Token Button */}
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-[var(--text-secondary)]">Access Token</span>
+                            <button
+                                onClick={handleGetToken}
+                                disabled={isFetchingToken}
+                                className="px-3 py-1.5 text-xs font-semibold bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] text-white rounded-lg hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                            >
+                                {isFetchingToken ? (
+                                    <>
+                                        <svg className="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                        </svg>
+                                        Fetching...
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                                        </svg>
+                                        Get Token
+                                    </>
+                                )}
+                            </button>
+                        </div>
                         <textarea
                             value={auth.grantTypeInfo.token}
                             onChange={e => onChange({
                                 ...auth,
                                 grantTypeInfo: { ...auth.grantTypeInfo, token: e.target.value }
                             })}
-                            placeholder="Paste access token or use Get Token button..."
-                            className="mt-1 w-full h-16 px-3 py-2 text-sm font-mono rounded-lg border border-[var(--glass-border)] bg-white/50 focus:border-[var(--accent-primary)] focus:outline-none transition-colors resize-y"
+                            placeholder="Click 'Get Token' or paste one manually..."
+                            className="w-full h-16 px-3 py-2 text-sm font-mono rounded-lg border border-[var(--glass-border)] bg-white/50 focus:border-[var(--accent-primary)] focus:outline-none transition-colors resize-y"
                         />
-                    </label>
+                        {tokenStatus && (
+                            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium ${tokenStatus.type === 'success'
+                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                    : 'bg-red-50 text-red-700 border border-red-200'
+                                }`}>
+                                {tokenStatus.type === 'success' ? '✅' : '❌'} {tokenStatus.message}
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
         </div>

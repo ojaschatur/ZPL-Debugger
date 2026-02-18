@@ -141,15 +141,37 @@ export async function getOAuth2Token(
         });
 
         const result = await response.json();
+
+        // Proxy-level network error
         if (result.error) {
             return { error: result.error };
         }
 
+        // Non-2xx from the token endpoint
+        if (result.status && (result.status < 200 || result.status >= 300)) {
+            const preview = (result.body || '').substring(0, 200);
+            return { error: `Token endpoint returned ${result.status}: ${preview}` };
+        }
+
+        // Try to parse the response body as JSON
         try {
             const tokenResponse = JSON.parse(result.body);
-            return { token: tokenResponse.access_token };
+
+            if (tokenResponse.access_token) {
+                return { token: tokenResponse.access_token };
+            }
+
+            // Server returned JSON but no access_token (e.g. {"error":"invalid_client"})
+            if (tokenResponse.error) {
+                const desc = tokenResponse.error_description || tokenResponse.error;
+                return { error: `Auth server error: ${desc}` };
+            }
+
+            return { error: `No access_token in response. Keys: ${Object.keys(tokenResponse).join(', ')}` };
         } catch {
-            return { error: 'Failed to parse token response' };
+            // Response is not JSON (probably HTML from wrong endpoint)
+            const preview = (result.body || '').substring(0, 150);
+            return { error: `Token endpoint returned non-JSON. Check the URL is correct. Response: ${preview}...` };
         }
     } catch (error) {
         return { error: error instanceof Error ? error.message : 'Token request failed' };

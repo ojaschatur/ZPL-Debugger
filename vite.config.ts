@@ -149,6 +149,6 @@ export default defineConfig(() => ({
   optimizeDeps: {
     exclude: ['zpl-renderer-js']
   },
-  // Vercel deploys from root
-  base: '/',
+  // GitHub Pages deploys to /ZPL-Debugger/
+  base: '/ZPL-Debugger/',
 }))
