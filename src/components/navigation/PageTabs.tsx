@@ -1,4 +1,4 @@
-export type PageType = 'json' | 'xml' | 'preview';
+export type PageType = 'json' | 'decode' | 'xml' | 'preview';
 
 interface PageTabsProps {
     activePage: PageType;
@@ -12,6 +12,15 @@ const tabs: { id: PageType; label: string; icon: JSX.Element; disabled?: boolean
         icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+        ),
+    },
+    {
+        id: 'decode',
+        label: 'Decode',
+        icon: (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
         ),
     },
@@ -44,10 +53,10 @@ export function PageTabs({ activePage, onPageChange }: PageTabsProps) {
                 <button
                     key={tab.id}
                     className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-medium text-sm transition-all duration-300 ${tab.disabled
-                            ? 'text-[var(--text-muted)] cursor-not-allowed opacity-50'
-                            : activePage === tab.id
-                                ? 'bg-gradient-to-r from-accent-primary to-accent-secondary text-white shadow-glow'
-                                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/50'
+                        ? 'text-[var(--text-muted)] cursor-not-allowed opacity-50'
+                        : activePage === tab.id
+                            ? 'bg-gradient-to-r from-accent-primary to-accent-secondary text-white shadow-glow'
+                            : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/50'
                         }`}
                     onClick={() => !tab.disabled && onPageChange(tab.id)}
                     title={tab.tooltip}

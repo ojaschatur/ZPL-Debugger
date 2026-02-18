@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { Header } from './components/layout/Header';
 import { PageTabs, type PageType } from './components/navigation/PageTabs';
 import { JsonRequestPage } from './components/pages/JsonRequestPage';
+import { DecodePage } from './components/pages/DecodePage';
 import { PreviewPage } from './components/pages/PreviewPage';
 import { ToastContainer } from './components/feedback/Toast';
 import { useZplRenderer } from './hooks/useZplRenderer';
@@ -194,6 +195,12 @@ function App() {
                 {/* Page Content */}
                 {activePage === 'json' && (
                     <JsonRequestPage
+                        onLabelsExtracted={handleLabelsExtracted}
+                    />
+                )}
+
+                {activePage === 'decode' && (
+                    <DecodePage
                         onLabelsExtracted={handleLabelsExtracted}
                     />
                 )}
