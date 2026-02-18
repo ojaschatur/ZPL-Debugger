@@ -79,7 +79,7 @@ export function extractByPath(data: unknown, path: string): ExtractedLabel[] {
 export function extractLabels(
     responseBody: string,
     labelPath?: string
-): { labels: ExtractedLabel[]; method: 'path' | 'auto-scan' } {
+): { labels: ExtractedLabel[]; method: 'path' | 'auto-scan' | 'xml-tag' } {
     let data: unknown;
     try {
         data = JSON.parse(responseBody);
@@ -95,6 +95,13 @@ export function extractLabels(
                 method: 'auto-scan',
             };
         }
+
+        // Try XML <LabelData> extraction
+        const xmlLabels = extractXmlLabelData(responseBody);
+        if (xmlLabels.length > 0) {
+            return { labels: xmlLabels, method: 'xml-tag' };
+        }
+
         // Try direct base64 decode
         const decoded = tryBase64Decode(responseBody);
         if (decoded && isZplContent(decoded)) {
@@ -118,7 +125,7 @@ export function extractLabels(
         }
     }
 
-    // Fall back to auto-scan
+    // Fall back to auto-scan (also checks for LabelData keys in JSON)
     const autoLabels = autoScanLabels(data);
     return { labels: autoLabels, method: 'auto-scan' };
 }
@@ -145,6 +152,47 @@ function tryBase64Decode(str: string): string | null {
 function isZplContent(content: string): boolean {
     const trimmed = content.trim();
     return trimmed.includes('^XA') && trimmed.includes('^XZ');
+}
+
+/**
+ * Extract ZPL labels from XML/SOAP <LabelData> tags.
+ * Handles common tag variations: <LabelData>, <labelData>, <LabelImage>, etc.
+ */
+function extractXmlLabelData(xmlString: string): ExtractedLabel[] {
+    const results: ExtractedLabel[] = [];
+    // Match common ZPL label XML tags (case-insensitive)
+    const tagPatterns = [
+        /<LabelData[^>]*>([^<]+)<\/LabelData>/gi,
+        /<labelData[^>]*>([^<]+)<\/labelData>/gi,
+        /<LabelImage[^>]*>([^<]+)<\/LabelImage>/gi,
+        /<labelImage[^>]*>([^<]+)<\/labelImage>/gi,
+        /<Label[^>]*>([^<]{50,})<\/Label>/gi,  // Only match long content (likely base64)
+    ];
+
+    const seen = new Set<string>();
+
+    for (const pattern of tagPatterns) {
+        let match;
+        let index = 0;
+        while ((match = pattern.exec(xmlString)) !== null) {
+            const rawData = match[1].trim();
+            if (seen.has(rawData)) continue;
+            seen.add(rawData);
+
+            // Try base64 decode
+            const decoded = tryBase64Decode(rawData);
+            if (decoded && isZplContent(decoded)) {
+                results.push({
+                    path: `<${match[0].match(/<(\w+)/)?.[1] || 'LabelData'}>[${index}]`,
+                    rawData,
+                    zplContent: decoded,
+                });
+                index++;
+            }
+        }
+    }
+
+    return results;
 }
 
 interface PathPart {

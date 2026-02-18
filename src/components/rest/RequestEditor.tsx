@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { HoppRequest, HttpMethod, HoppAuth, HoppBody, KeyValuePair } from '../../types/restTypes';
 import { METHOD_COLORS } from '../../types/restTypes';
 import { KeyValueEditor } from './KeyValueEditor';
@@ -19,6 +19,12 @@ const HTTP_METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HE
 export function RequestEditor({ request, onRequestChange, onSend, isLoading }: RequestEditorProps) {
     const [activeTab, setActiveTab] = useState<RequestTab>('params');
     const [showMethodDropdown, setShowMethodDropdown] = useState(false);
+
+    // Detect if running on static hosting (no proxy available)
+    const isProxyUnavailable = useMemo(() => {
+        const host = window.location.hostname;
+        return host.includes('github.io') || host.includes('pages.dev') || host.includes('netlify.app');
+    }, []);
 
     if (!request) {
         return (
@@ -122,6 +128,18 @@ export function RequestEditor({ request, onRequestChange, onSend, isLoading }: R
                 </button>
             </div>
 
+            {/* Proxy Unavailable Warning */}
+            {isProxyUnavailable && (
+                <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800">
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <p className="text-xs">
+                        <strong>Proxy not available.</strong> Send requests won't work on static hosting. Run <code className="bg-amber-100 px-1 rounded">npm run dev</code> locally for full functionality.
+                    </p>
+                </div>
+            )}
+
             {/* Request Tabs */}
             <div className="flex gap-1 bg-white/30 rounded-xl p-1 border border-[var(--glass-border)]">
                 {tabs.map(tab => (
@@ -129,8 +147,8 @@ export function RequestEditor({ request, onRequestChange, onSend, isLoading }: R
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
                         className={`flex-1 flex items-center justify-center gap-1 px-4 py-2 rounded-lg text-xs font-medium transition-all ${activeTab === tab.id
-                                ? 'bg-white shadow-sm text-[var(--text-primary)]'
-                                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/50'
+                            ? 'bg-white shadow-sm text-[var(--text-primary)]'
+                            : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/50'
                             }`}
                     >
                         {tab.label}
