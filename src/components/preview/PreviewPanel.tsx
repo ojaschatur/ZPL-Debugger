@@ -126,8 +126,9 @@ export function PreviewPanel({ image, isLoading, error, rotation = 0 }: PreviewP
             <div
                 ref={containerRef}
                 className="flex-1 p-4 overflow-auto bg-[repeating-conic-gradient(#f0f0f0_0_90deg,#fff_0_180deg)_0_0/20px_20px]"
+                style={{ position: 'relative' }}
             >
-                <div className="w-full h-full flex items-center justify-center">
+                <div className="w-full h-full flex items-center justify-center" style={{ minHeight: 0, overflow: 'hidden' }}>
                     {isLoading ? (
                         <div className="flex flex-col items-center gap-3 text-[var(--text-muted)]">
                             <svg className="animate-spin w-10 h-10" fill="none" viewBox="0 0 24 24">
@@ -152,6 +153,9 @@ export function PreviewPanel({ image, isLoading, error, rotation = 0 }: PreviewP
                             alt="ZPL Label Preview"
                             className="shadow-lg rounded animate-fade-in"
                             style={{
+                                maxWidth: '100%',
+                                maxHeight: '100%',
+                                objectFit: 'contain',
                                 ...getTransformStyle()
                             }}
                         />
